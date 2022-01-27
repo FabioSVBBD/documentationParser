@@ -13,6 +13,7 @@ Format for The Parser can be viewed in example.js
     * code blocks can optionally have a caption before the code, but line must end with a semi-colon (;).
 
 ## Running
+After cloning, run ```npm i```, then to run the parser
 * ```node parser.js inputFileName outputFileName```
 
 ### Example
