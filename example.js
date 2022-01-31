@@ -8,6 +8,7 @@ description here \\
 Properties:
 #-- propName,  defaultValue, type, legalValues, description --#
 #-- propName,  defaultValue, type, legalValues, description --#
+
 \\
 
 Examples:

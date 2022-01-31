@@ -4,7 +4,6 @@ const fs = require("fs");
 const babelParser = require("@babel/parser");
 
 const headerEndMarker = "\\\\";
-const workerFile = "Markdown tests\\component-1.js";
 
 let inputFile = "";
 let outputFile = "OUTPUT.MD";
@@ -17,8 +16,11 @@ const codeCloseDelimiter = "--$";
 
 const codeCaptionDelimiter = ";";
 
+const propsTableHeader = `| Property | Default Value | Type | Supported Values | Description |\n| --- | --- | --- | --- | --- |\n`;
+
 {
   function canParse(stringValue) {
+    // TODO
     return true;
   }
 
@@ -165,7 +167,7 @@ const codeCaptionDelimiter = ";";
         markdown += `# ${value}\n`;
       } else if (key.toUpperCase() === "PROPERTIES") {
         markdown += `## ${key}\n\n`;
-        markdown += `| Property | Default Value | Type | Supported Values | Description |\n| --- | --- | --- | --- | --- |\n`;
+        markdown += propsTableHeader;
         markdown += `${value}\n`;
       } else {
         markdown += `## ${key}\n\n${value}\n`;
@@ -179,11 +181,11 @@ const codeCaptionDelimiter = ";";
     fs.writeFile(file, markdown, (err) => {
       if (err) {
         console.error(err);
-        return;
+        return false;
       }
-
-      console.log(`Documentation written to ${file} .`);
     });
+
+    return true;
   }
 
   function attemptParse(file) {
@@ -198,7 +200,11 @@ const codeCaptionDelimiter = ";";
           console.log(`Opening ${inputFile}...`);
           let dom = parse(value);
 
-          generateMD_File(domToMarkDown(dom), outputFile);
+          if (generateMD_File(domToMarkDown(dom), outputFile)) {
+            console.log(`Documentation successfully written to ${file} in Markdown format.`);
+          } else {
+            console.log(`Some sort of error occurred. Please try again later.`);
+          }
         }
       }
     }
@@ -215,7 +221,7 @@ const codeCaptionDelimiter = ";";
     }
   }
 
-  // execution really begins here
+  // execution begins here
   getArgs();
   if (inputFile !== "") {
     attemptParse(inputFile);
