@@ -15,7 +15,7 @@ const rowCloseDelimiter = "--#";
 const codeOpenDelimiter = "$--";
 const codeCloseDelimiter = "--$";
 
-const lineEndMarker = ";";
+const codeCaptionDelimiter = ";";
 
 {
   function canParse(stringValue) {
@@ -74,6 +74,7 @@ const lineEndMarker = ";";
         }
       }
     } else if (atom.includes(codeOpenDelimiter)) {
+      // is code block type
       let firstBreakIndex = atom.indexOf(codeOpenDelimiter);
 
       let prefix = atom.substring(0, firstBreakIndex);
@@ -88,12 +89,12 @@ const lineEndMarker = ";";
         let worker = atoms[i].trim();
 
         if (worker !== "") {
-          if (worker.startsWith(";")) {
+          if (worker.startsWith(codeCaptionDelimiter)) {
             worker = worker.substring(1);
           }
 
           worker = worker.split(codeOpenDelimiter).join("").trim();
-          let elems = worker.split(";");
+          let elems = worker.split(codeCaptionDelimiter);
 
           let obj = {};
 
@@ -154,6 +155,7 @@ const lineEndMarker = ";";
     return domObject;
   }
 
+  // MAGIC STRINGS
   function domToMarkDown(dom) {
     let markdown = "";
 
