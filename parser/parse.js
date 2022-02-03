@@ -1,3 +1,5 @@
+const { parse } = require("querystring");
+
 {
   // parser 2.0
 
@@ -29,6 +31,16 @@
     code: "READING_CODE",
   };
 
+  const endErrorMessages = {
+    endErrorDefault: "Execution terminated in non - final state.",
+    key: "Colon Parse Error: Failed to read colon following key.",
+    value: "Escape Marker Error: Failed to read escape marker following value.",
+    row: "Row End Marker Error: Failed to read end of row marker.",
+    block: "Null Block Error: Failed to read code block. Code block is empty.",
+    caption: "Block End Marker Error: Failed to read end of code block.",
+    code: "Caption Marker Error: Failed to read end of code caption. Missing semi-colon.",
+  };
+
   const valuesKeys = {
     text: "text",
     table: "table",
@@ -39,7 +51,20 @@
   const MAGIC = {
     commentBlock: "CommentBlock",
     newline: "\r\n",
+    name: "NAME",
+    properties: "PROPERTIES",
+    threeBackticks: "```",
   };
+
+  const statuses = {
+    SUCCESS: true,
+    FAILURE: false,
+  };
+
+  const propertiesTableHeader = [
+    [ "Property", "Default Value", "Type", "Supported Values", "Description" ],
+    [ "---", "---", "---", "---", "---" ]
+  ]
 
   let inFile,
     outFile = "output.MD";
@@ -102,7 +127,7 @@
     return false;
   }
 
-  function parse(commentBlock) {
+  function tokenize(commentBlock) {
     let state = STATES.start_end;
     let fileObject = {
       keys: [],
@@ -113,7 +138,8 @@
 
     for (let i = 0; i < commentBlock.length; i++) {
       let current = commentBlock[i];
-      let second = commentBlock.length > i + 1 ? commentBlock[i + 1] : undefined;
+      let second =
+        commentBlock.length > i + 1 ? commentBlock[i + 1] : undefined;
       let third = commentBlock.length > i + 2 ? commentBlock[i + 2] : undefined;
 
       switch (state) {
@@ -133,7 +159,9 @@
 
           break;
         case STATES.value:
-          if (current == "\r" || current == "\n") break;
+          if (current == "\r" || current == "\n") {
+            break;
+          }
 
           if (fileObject.values.length <= currentIndex) {
             fileObject.values.push([]);
@@ -150,7 +178,6 @@
             break;
           }
 
-          // Case 2: reading text
           if (type === valuesKeys.text) {
             if (fileObject.values[currentIndex].length === 0) {
               fileObject.values[currentIndex].push({
@@ -209,14 +236,12 @@
             }
           }
 
-          // fileObject.values[currentIndex][len - 1].value = value;
-
           break;
         case STATES.block:
           if (current !== "\r" && current !== "\n") {
-            let len2 = fileObject.values[currentIndex].length;
+            let len = fileObject.values[currentIndex].length;
 
-            fileObject.values[currentIndex][len2 - 1].value = {
+            fileObject.values[currentIndex][len - 1].value = {
               caption: undefined,
               code: undefined,
             };
@@ -237,7 +262,7 @@
             let value = fileObject.values[currentIndex][len - 1].value;
 
             if (value.caption === undefined) {
-              value.caption = String(current);
+              value.caption = String(current === "@" ? "" : current);
             } else {
               value.caption += String(current);
             }
@@ -271,22 +296,158 @@
 
     console.log("> fileObject: \n", JSON.stringify(fileObject));
 
+    let status;
+
     if (state === STATES.start_end) {
-      console.log("> Successful parse...");
+      console.log("> Tokenized successfully ...");
+
+      status = statuses.SUCCESS;
     } else {
-      console.log("> Error: Did not terminate parse in acceptable state");
+      let errorMessage = endErrorMessages[state];
+
+      console.log("> Error: Did not terminate Tokenization in terminal state.");
+      if (errorMessage !== undefined) {
+        console.log(`> ${errorMessage}`);
+      }
+
+      status = statuses.FAILURE;
     }
+
+    return {
+      status: status,
+      fileTree: fileObject,
+    };
+  }
+
+  function removeEscapesInKey(key) {
+    while (key.includes("\n") || key.includes("\r")) {
+      key = key.replace("\n", "");
+      key = key.replace("\r", "");
+    }
+
+    return key;
+  }
+
+  function getKeyValueString(key, value) {
+    // TODO
+    let data = "";
+    key = removeEscapesInKey(key);
+
+    data += `## ${key}\n`;
+
+    value.forEach((element, i, arr) => {
+
+      switch (element.type) {
+        case valuesKeys.text:
+          data += `\n${element.value.trim()}\n\n`;
+          break;
+        case valuesKeys.table:
+          let values = element.value;
+          values.forEach((elem, index, array) => {
+            data += `| ${elem.trim()} `;
+          });
+          data += `|\n`;
+          break;
+        case valuesKeys.code:
+          let val = element.value;
+          data += `### ${val.caption.trim()}\n\n`;
+          data += `${MAGIC.threeBackticks}\n${val.code.trim()}\n${
+            MAGIC.threeBackticks
+          }\n`;
+          break;
+      }
+    });
+
+    // data += `\n`;
+
+    return data;
+  }
+
+  function writeToFile(file, data) {
+    fs.writeFile(file, data, (err) => {
+      if (err) {
+        console.error(`> ${err}`);
+        return false;
+      }
+    });
+  }
+
+  function writeObject(file, tree) {
+    let data = "";
+    let { keys, values } = tree;
+
+    keys.forEach((key, index) => {
+      let value = values[index];
+      key = removeEscapesInKey(key);
+
+      if (key.toUpperCase() === MAGIC.name) {
+        // TODO
+        data += `# ${removeEscapesInKey(value[0].value)}\n\n`;
+
+      } else if (key.toUpperCase() === MAGIC.properties) {
+        // TODO
+        console.log("value in props", value);
+
+        // find index of first elem with type table
+        // splice header in there
+        let index = value.findIndex((elem) => elem['type'] === valuesKeys.table);
+        console.log("index of first table should be 1", index);
+
+        let temp1 = {
+          type: valuesKeys.table,
+          value: propertiesTableHeader[0]
+        }
+
+        let temp2 = {
+          type: valuesKeys.table,
+          value: propertiesTableHeader[1]
+        }
+
+        value.splice(index, 0, temp1);
+        value.splice(index + 1, 0, temp2);
+
+        console.log("updated value in props\n", value);
+
+        data += getKeyValueString(key, value);
+
+      } else {
+        data += getKeyValueString(key, value);
+      }
+
+      // TODO: remove this line when uncommenting above
+      // data += getKeyValueString(key, value);
+
+      writeToFile(file, data);
+    });
+  }
+
+  function main() {
+    console.log();
+
+    if (parseArgs()) {
+      let block = getCommentBlock(inFile);
+
+      if (block !== undefined) {
+        console.log(`> tokenizing ${inFile}...`);
+        let { status, fileTree } = tokenize(block.trim());
+
+        if (status === statuses.SUCCESS) {
+          console.log(`> writing to ${outFile}...`);
+          // write to markdown
+          writeObject(outFile, fileTree);
+
+          console.log(`> write complete.`);
+        }
+      } else {
+        console.error(`> Error: no comment block found in ${inFile}.`);
+      }
+    } else {
+      console.log("> No Arguments provided. Format: infile outfile");
+    }
+
+    console.log();
   }
 
   // Begin execution
-  if (parseArgs()) {
-    console.log(`> input: ${inFile}, output: ${outFile}`);
-    let block = getCommentBlock(inFile);
-
-    if (block !== undefined) {
-      parse(block.trim());
-    } else {
-      console.error(`> Error: no comment block found in ${inFile}.`);
-    }
-  }
+  main();
 }
