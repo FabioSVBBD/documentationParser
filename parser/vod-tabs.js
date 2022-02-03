@@ -1,13 +1,13 @@
 /*
 Name:
-vod-tabs, implements Tabs \\
+```vod-tabs, implements Tabs``` \\
 
 Description:
 Used to display tab data, where each tab has a title, and optionally content.
 if no content is supplied, tab data area is empty. \\
 
 Properties:
-#-- ```tabs```, empty array, ```Array<strings>```, any, an array that stores the string titles of each tab. If not supplied first tab's information is displayed and cannot be changed. --#
+#-- ```tabs```, ```[]```, ```Array<strings>```, any, an array that stores the string titles of each tab. If not supplied first tab's information is displayed and cannot be changed. --#
 #-- ```selectedTab```,  ```0```, ```integer```, any ```integer```, a non-negative integer that specifies the index of the default tab to display. --#
 \\
 
@@ -33,7 +33,7 @@ $--
 \\
 
 Children:
-vod-tabs takes in children with a slot property defined. If the slot property is not defined, the child will be unreachable. children can be any component type. the slot property should be an index that corresponds to an element inside the tabs[] array. if slot is out of bounds, child will be unreachable.
+```vod-tabs``` takes in children with a slot property defined. If the slot property is not defined, the child will be unreachable. children can be any component type. the slot property should be an index that corresponds to an element inside the ```tabs[]``` array. if slot is out of bounds, child will be unreachable.
 \\
 
 */

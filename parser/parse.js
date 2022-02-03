@@ -62,9 +62,9 @@ const { parse } = require("querystring");
   };
 
   const propertiesTableHeader = [
-    [ "Property", "Default Value", "Type", "Supported Values", "Description" ],
-    [ "---", "---", "---", "---", "---" ]
-  ]
+    ["Property", "Default Value", "Type", "Supported Values", "Description"],
+    ["---", "---", "---", "---", "---"],
+  ];
 
   let inFile,
     outFile = "output.MD";
@@ -294,7 +294,7 @@ const { parse } = require("querystring");
       }
     }
 
-    console.log("> fileObject: \n", JSON.stringify(fileObject));
+    // console.log("> fileObject: \n", JSON.stringify(fileObject));
 
     let status;
 
@@ -336,14 +336,13 @@ const { parse } = require("querystring");
     data += `## ${key}\n`;
 
     value.forEach((element, i, arr) => {
-
       switch (element.type) {
         case valuesKeys.text:
           data += `\n${element.value.trim()}\n\n`;
           break;
         case valuesKeys.table:
           let values = element.value;
-          values.forEach((elem, index, array) => {
+          values.forEach((elem) => {
             data += `| ${elem.trim()} `;
           });
           data += `|\n`;
@@ -357,8 +356,6 @@ const { parse } = require("querystring");
           break;
       }
     });
-
-    // data += `\n`;
 
     return data;
   }
@@ -382,19 +379,20 @@ const { parse } = require("querystring");
 
       if (key.toUpperCase() === MAGIC.name) {
         data += `# ${removeEscapesInKey(value[0].value)}\n\n`;
-
       } else if (key.toUpperCase() === MAGIC.properties) {
-        let index = value.findIndex((elem) => elem['type'] === valuesKeys.table);
-        
+        let index = value.findIndex(
+          (elem) => elem["type"] === valuesKeys.table
+        );
+
         let temp = { type: valuesKeys.table };
 
-        value.splice(index, 0, {...temp, value: propertiesTableHeader[0]});
-        value.splice(index + 1, 0, {...temp, value: propertiesTableHeader[1]});
-
-        console.log("updated value in props\n", value);
+        value.splice(index, 0, { ...temp, value: propertiesTableHeader[0] });
+        value.splice(index + 1, 0, {
+          ...temp,
+          value: propertiesTableHeader[1],
+        });
 
         data += getKeyValueString(key, value);
-
       } else {
         data += getKeyValueString(key, value);
       }

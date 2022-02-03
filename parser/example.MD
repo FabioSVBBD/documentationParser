@@ -37,7 +37,3 @@ optional text
 ```
 <code block />
 ```
-## Generic Header
-
-children
-
