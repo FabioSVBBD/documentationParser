@@ -381,30 +381,15 @@ const { parse } = require("querystring");
       key = removeEscapesInKey(key);
 
       if (key.toUpperCase() === MAGIC.name) {
-        // TODO
         data += `# ${removeEscapesInKey(value[0].value)}\n\n`;
 
       } else if (key.toUpperCase() === MAGIC.properties) {
-        // TODO
-        console.log("value in props", value);
-
-        // find index of first elem with type table
-        // splice header in there
         let index = value.findIndex((elem) => elem['type'] === valuesKeys.table);
-        console.log("index of first table should be 1", index);
+        
+        let temp = { type: valuesKeys.table };
 
-        let temp1 = {
-          type: valuesKeys.table,
-          value: propertiesTableHeader[0]
-        }
-
-        let temp2 = {
-          type: valuesKeys.table,
-          value: propertiesTableHeader[1]
-        }
-
-        value.splice(index, 0, temp1);
-        value.splice(index + 1, 0, temp2);
+        value.splice(index, 0, {...temp, value: propertiesTableHeader[0]});
+        value.splice(index + 1, 0, {...temp, value: propertiesTableHeader[1]});
 
         console.log("updated value in props\n", value);
 
@@ -413,9 +398,6 @@ const { parse } = require("querystring");
       } else {
         data += getKeyValueString(key, value);
       }
-
-      // TODO: remove this line when uncommenting above
-      // data += getKeyValueString(key, value);
 
       writeToFile(file, data);
     });
